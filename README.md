@@ -1,6 +1,6 @@
 This is a first project in Krafton jungle
 
-functions
+functions : 
   Login
   Register
   CRUD
