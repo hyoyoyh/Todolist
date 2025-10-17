@@ -6,5 +6,3 @@ functions :
   CRUD
   Live upadate using SSE
   Ranking
-
-  http://todolist.r-e.kr
