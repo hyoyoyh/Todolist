@@ -7,3 +7,6 @@ TodoList 제작하기
 <img width="1920" height="1029" alt="스크린샷 2025-10-17 104102" src="https://github.com/user-attachments/assets/027684e5-e6e8-4a20-ac90-76efef9d762a" />
 <img width="1920" height="1024" alt="스크린샷 2025-10-17 104206" src="https://github.com/user-attachments/assets/03a1f4fc-932f-4d43-a3e9-4ca96cd6fa35" />
 <img width="1920" height="1030" alt="스크린샷 2025-10-17 104226" src="https://github.com/user-attachments/assets/28fcf05e-446d-4f13-a482-31b5278373df" />
+
+flask-server-set : 배포용으로 사용했던 버전
+only-local : 로컬에서 사용 가능하게 만든 버전
