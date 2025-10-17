@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Todo Ranking - 완료 랭킹</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet"/>
+<style>
+.ranking-container {
+    width: 100%;
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.ranking-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.ranking-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #1976d2;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(25,118,210,.2);
+    background: linear-gradient(135deg, #1976d2, #2196f3, #42a5f5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ranking-subtitle {
+    font-size: 1.1rem;
+    color: #546e7a;
+    margin-bottom: 0;
+}
+
+.ranking-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    padding: 1.8rem 2.2rem;
+    margin: 1.2rem auto;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    max-width: 750px;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.ranking-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2196f3, #1976d2, #0d47a1);
+    border-radius: 20px 20px 0 0;
+}
+
+.ranking-card.rank-1 {
+    background: linear-gradient(135deg, rgba(255,215,0,0.18) 0%, rgba(255,193,7,0.12) 50%, rgba(13,17,23,0.6) 100%);
+    border: 3px solid rgba(255,215,0,0.35);
+    box-shadow: 0 20px 60px rgba(255,215,0,0.25), 0 0 0 1px rgba(255,215,0,0.12);
+    transform: scale(1.08);
+    position: relative;
+    overflow: visible;
+    margin: 2rem auto;
+    z-index: 3;
+}
+
+.ranking-card.rank-1::before {
+    background: linear-gradient(90deg, #ffd700, #ffb300, #ff8f00);
+    height: 6px;
+    box-shadow: 0 2px 10px rgba(255,215,0,0.5);
+}
+
+.ranking-card.rank-1::after {
+    content: '✨';
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    font-size: 2.2rem;
+    animation: sparkle 2s infinite;
+    z-index: 4;
+}
+
+.ranking-card.rank-2 {
+    background: linear-gradient(135deg, rgba(192,192,192,0.18) 0%, rgba(158,158,158,0.12) 50%, rgba(13,17,23,0.6) 100%);
+    border: 3px solid rgba(192,192,192,0.35);
+    box-shadow: 0 18px 55px rgba(192,192,192,0.25), 0 0 0 1px rgba(192,192,192,0.12);
+    transform: scale(1.04);
+    position: relative;
+    margin: 1.8rem auto;
+    z-index: 2;
+}
+
+.ranking-card.rank-2::before {
+    background: linear-gradient(90deg, #c0c0c0, #9e9e9e, #757575);
+    height: 5px;
+    box-shadow: 0 2px 8px rgba(192,192,192,0.4);
+}
+
+.ranking-card.rank-2::after {
+    content: '⭐';
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    font-size: 2rem;
+    animation: twinkle 2.5s infinite;
+    z-index: 3;
+}
+
+.ranking-card.rank-3 {
+    background: linear-gradient(135deg, rgba(205,127,50,0.18) 0%, rgba(160,82,45,0.12) 50%, rgba(13,17,23,0.6) 100%);
+    border: 3px solid rgba(205,127,50,0.35);
+    box-shadow: 0 16px 50px rgba(205,127,50,0.25), 0 0 0 1px rgba(205,127,50,0.12);
+    transform: scale(1.02);
+    position: relative;
+    margin: 1.6rem auto;
+    z-index: 1;
+}
+
+.ranking-card.rank-3::before {
+    background: linear-gradient(90deg, #cd7f32, #a0522d, #8b4513);
+    height: 5px;
+    box-shadow: 0 2px 8px rgba(205,127,50,0.4);
+}
+
+.ranking-card.rank-3::after {
+    content: '🌟';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 1.8rem;
+    animation: glow 3s infinite;
+    z-index: 2;
+}
+
+.ranking-position {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff;
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    box-shadow: 0 6px 20px rgba(25,118,210,0.4);
+    border: 3px solid rgba(255,255,255,0.8);
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.ranking-card.rank-1 .ranking-position {
+    background: linear-gradient(135deg, #ffd700, #ffb300);
+    color: #333;
+    box-shadow: 0 10px 30px rgba(255,215,0,0.6), 0 0 25px rgba(255,215,0,0.3);
+    border: 4px solid rgba(255,255,255,0.9);
+    width: 75px;
+    height: 75px;
+    font-size: 2.2rem;
+    animation: goldenPulse 2s infinite;
+    position: relative;
+}
+
+.ranking-card.rank-1 .ranking-position::before {
+    content: '👑';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.2rem;
+    z-index: 3;
+    animation: crownFloat 3s infinite;
+    filter: drop-shadow(0 2px 4px rgba(255,215,0,0.3));
+}
+
+.ranking-card.rank-2 .ranking-position {
+    background: linear-gradient(135deg, #c0c0c0, #9e9e9e);
+    color: #333;
+    box-shadow: 0 8px 25px rgba(192,192,192,0.5), 0 0 20px rgba(192,192,192,0.2);
+    border: 3px solid rgba(255,255,255,0.9);
+    width: 68px;
+    height: 68px;
+    font-size: 2rem;
+    animation: silverShine 2.5s infinite;
+}
+
+.ranking-card.rank-3 .ranking-position {
+    background: linear-gradient(135deg, #cd7f32, #a0522d);
+    color: #fff;
+    box-shadow: 0 7px 22px rgba(205,127,50,0.5), 0 0 15px rgba(205,127,50,0.2);
+    border: 3px solid rgba(255,255,255,0.8);
+    width: 65px;
+    height: 65px;
+    font-size: 1.9rem;
+    animation: bronzeGlow 3s infinite;
+}
+
+.ranking-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.ranking-username {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #90caf9;
+    margin: 0;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.ranking-card.rank-1 .ranking-username {
+    color: #ff8f00;
+    text-shadow: 0 2px 4px rgba(255,143,0,0.3);
+    font-size: 2.1rem;
+}
+
+.ranking-card.rank-2 .ranking-username {
+    color: #616161;
+    text-shadow: 0 1px 3px rgba(97,97,97,0.2);
+    font-size: 2rem;
+}
+
+.ranking-card.rank-3 .ranking-username {
+    color: #8b4513;
+    text-shadow: 0 1px 3px rgba(139,69,19,0.2);
+    font-size: 1.95rem;
+}
+
+.ranking-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+}
+
+.ranking-badges {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.ranking-medal-badge {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    animation: medalFloat 3s infinite ease-in-out;
+}
+
+.ranking-card.rank-1 .ranking-medal-badge {
+    animation: goldenMedalFloat 2s infinite ease-in-out;
+}
+
+.ranking-card.rank-2 .ranking-medal-badge {
+    animation: silverMedalFloat 2.5s infinite ease-in-out;
+}
+
+.ranking-card.rank-3 .ranking-medal-badge {
+    animation: bronzeMedalFloat 3s infinite ease-in-out;
+}
+
+.ranking-completed {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(25,118,210,0.1);
+    padding: 0.6rem 1.2rem;
+    border-radius: 18px;
+    border: 1px solid rgba(25,118,210,0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.ranking-completed:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(25,118,210,0.2);
+}
+
+.ranking-card.rank-1 .ranking-completed {
+    background: rgba(255,215,0,0.15);
+    border-color: rgba(255,215,0,0.3);
+    box-shadow: 0 2px 8px rgba(255,215,0,0.2);
+}
+
+.ranking-card.rank-1 .ranking-completed:hover {
+    box-shadow: 0 6px 20px rgba(255,215,0,0.3);
+}
+
+.ranking-card.rank-2 .ranking-completed {
+    background: rgba(192,192,192,0.15);
+    border-color: rgba(192,192,192,0.3);
+    box-shadow: 0 2px 8px rgba(192,192,192,0.2);
+}
+
+.ranking-card.rank-2 .ranking-completed:hover {
+    box-shadow: 0 6px 20px rgba(192,192,192,0.3);
+}
+
+.ranking-card.rank-3 .ranking-completed {
+    background: rgba(205,127,50,0.15);
+    border-color: rgba(205,127,50,0.3);
+    box-shadow: 0 2px 8px rgba(205,127,50,0.2);
+}
+
+.ranking-card.rank-3 .ranking-completed:hover {
+    box-shadow: 0 6px 20px rgba(205,127,50,0.3);
+}
+
+.ranking-count {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1976d2;
+    margin: 0;
+}
+
+.ranking-card.rank-1 .ranking-count {
+    color: #ff8f00;
+}
+
+.ranking-card.rank-2 .ranking-count {
+    color: #616161;
+}
+
+.ranking-card.rank-3 .ranking-count {
+    color: #8b4513;
+}
+
+.ranking-label {
+    font-size: 0.9rem;
+    color: #9fb3c8;
+    font-weight: 600;
+    margin: 0;
+}
+
+.ranking-medal {
+    font-size: 1.2rem;
+}
+
+.ranking-count {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1976d2;
+}
+
+.ranking-card.rank-1 .ranking-count {
+    color: #ff8f00;
+}
+
+.ranking-card.rank-2 .ranking-count {
+    color: #616161;
+}
+
+.ranking-card.rank-3 .ranking-count {
+    color: #8b4513;
+}
+
+.ranking-label {
+    font-size: 0.9rem;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.empty-ranking {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 2px dashed rgba(144,202,249,0.4);
+    color: #90caf9;
+    font-size: 1.2rem;
+    font-weight: 600;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    animation: pulse 2s infinite;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(144,202,249,0.25);
+    border-radius: 50%;
+    border-top-color: #90caf9;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 순위별 애니메이션 */
+.ranking-card {
+    opacity: 0;
+    animation: rankingFadeIn 0.6s ease forwards;
+}
+
+.ranking-card:nth-child(1) { animation-delay: 0.1s; }
+.ranking-card:nth-child(2) { animation-delay: 0.2s; }
+.ranking-card:nth-child(3) { animation-delay: 0.3s; }
+.ranking-card:nth-child(4) { animation-delay: 0.4s; }
+.ranking-card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes rankingFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 더보기 버튼 스타일 */
+.show-more-btn {
+    background: linear-gradient(135deg, #1976d2, #2196f3);
+    color: white;
+    border: none;
+    padding: 1.2rem 2.5rem;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(25,118,210,0.3);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    margin: 3rem auto;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+}
+
+.show-more-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(25,118,210,0.4);
+    background: linear-gradient(135deg, #1565c0, #1976d2);
+}
+
+.show-more-btn:active {
+    transform: translateY(-2px) scale(0.98);
+}
+
+.show-more-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.6s;
+}
+
+.show-more-btn:hover::before {
+    left: 100%;
+}
+
+/* 엑셀 스타일 테이블 */
+.excel-table-container {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    padding: 2rem;
+    margin: 2rem 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+}
+
+.excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0f172a;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.excel-table thead {
+    background: linear-gradient(135deg, #1565c0, #1e88e5);
+    color: white;
+}
+
+.excel-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid rgba(255,255,255,0.12);
+}
+
+.excel-table th:last-child {
+    border-right: none;
+}
+
+.excel-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.04);
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+    color: #e6edf3;
+}
+
+.excel-table td:last-child {
+    border-right: none;
+}
+
+.excel-table tbody tr:hover {
+    background-color: rgba(25,118,210,0.08);
+}
+
+.excel-table tbody tr:nth-child(even) {
+    background-color: rgba(255,255,255,0.02);
+}
+
+.excel-table tbody tr:nth-child(odd) {
+    background-color: rgba(255,255,255,0.01);
+}
+
+.excel-rank {
+    font-weight: 700;
+    color: #90caf9;
+    text-align: center;
+    width: 80px;
+}
+
+.excel-username {
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+.excel-completed {
+    text-align: center;
+    font-weight: 700;
+    color: #81c784;
+    width: 140px;
+}
+
+/* 테이블 애니메이션 */
+.excel-table tbody tr {
+    opacity: 0;
+    animation: tableRowFadeIn 0.4s ease forwards;
+}
+
+.excel-table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+.excel-table tbody tr:nth-child(2) { animation-delay: 0.15s; }
+.excel-table tbody tr:nth-child(3) { animation-delay: 0.2s; }
+.excel-table tbody tr:nth-child(4) { animation-delay: 0.25s; }
+.excel-table tbody tr:nth-child(5) { animation-delay: 0.3s; }
+.excel-table tbody tr:nth-child(6) { animation-delay: 0.35s; }
+.excel-table tbody tr:nth-child(7) { animation-delay: 0.4s; }
+.excel-table tbody tr:nth-child(8) { animation-delay: 0.45s; }
+.excel-table tbody tr:nth-child(9) { animation-delay: 0.5s; }
+.excel-table tbody tr:nth-child(10) { animation-delay: 0.55s; }
+
+@keyframes tableRowFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 화려한 애니메이션 효과들 */
+@keyframes sparkle {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2) rotate(180deg);
+        opacity: 0.7;
+    }
+}
+
+@keyframes twinkle {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.6;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+@keyframes goldenPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(255,215,0,0.6), 0 0 20px rgba(255,215,0,0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 35px rgba(255,215,0,0.8), 0 0 30px rgba(255,215,0,0.5);
+    }
+}
+
+@keyframes silverShine {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 7px 22px rgba(192,192,192,0.5), 0 0 15px rgba(192,192,192,0.2);
+    }
+    50% {
+        transform: scale(1.03);
+        box-shadow: 0 10px 28px rgba(192,192,192,0.7), 0 0 25px rgba(192,192,192,0.4);
+    }
+}
+
+@keyframes bronzeGlow {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 6px 20px rgba(205,127,50,0.5), 0 0 12px rgba(205,127,50,0.2);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(205,127,50,0.7), 0 0 20px rgba(205,127,50,0.4);
+    }
+}
+
+@keyframes crownFloat {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0px);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+/* 메달 애니메이션 */
+@keyframes medalFloat {
+    0%, 100% {
+        transform: translateY(0px) scale(1);
+    }
+    50% {
+        transform: translateY(-3px) scale(1.05);
+    }
+}
+
+@keyframes goldenMedalFloat {
+    0%, 100% {
+        transform: translateY(0px) scale(1) rotate(0deg);
+    }
+    33% {
+        transform: translateY(-4px) scale(1.08) rotate(2deg);
+    }
+    66% {
+        transform: translateY(-2px) scale(1.03) rotate(-1deg);
+    }
+}
+
+@keyframes silverMedalFloat {
+    0%, 100% {
+        transform: translateY(0px) scale(1);
+    }
+    50% {
+        transform: translateY(-3px) scale(1.06);
+    }
+}
+
+@keyframes bronzeMedalFloat {
+    0%, 100% {
+        transform: translateY(0px) scale(1);
+    }
+    50% {
+        transform: translateY(-2px) scale(1.04);
+    }
+}
+
+.table-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.table-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #90caf9;
+    margin-bottom: 0.5rem;
+}
+
+.table-subtitle {
+    font-size: 1rem;
+    color: #9fb3c8;
+}
+
+.hidden {
+    display: none;
+}
+
+/* 반응형 디자인 개선 */
+@media (max-width: 768px) {
+    .ranking-container {
+        padding: 0 0.5rem;
+    }
+    
+    .ranking-header {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .ranking-title {
+        font-size: 2.2rem;
+    }
+    
+    .ranking-card {
+        padding: 1.5rem 1.8rem;
+        margin: 1rem auto;
+        border-radius: 15px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .ranking-card.rank-1 {
+        transform: scale(1.05);
+        margin: 1.5rem auto;
+    }
+    
+    .ranking-card.rank-2 {
+        transform: scale(1.02);
+        margin: 1.3rem auto;
+    }
+    
+    .ranking-card.rank-3 {
+        transform: scale(1.01);
+        margin: 1.2rem auto;
+    }
+    
+    .ranking-position {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .ranking-card.rank-1 .ranking-position {
+        width: 60px;
+        height: 60px;
+        font-size: 1.8rem;
+    }
+    
+    .ranking-card.rank-1 .ranking-position::before {
+        font-size: 1.8rem;
+        top: -20px;
+    }
+    
+    .ranking-card.rank-2 .ranking-position {
+        width: 55px;
+        height: 55px;
+        font-size: 1.6rem;
+    }
+    
+    .ranking-card.rank-3 .ranking-position {
+        width: 52px;
+        height: 52px;
+        font-size: 1.55rem;
+    }
+    
+    .ranking-info {
+        order: 2;
+    }
+    
+    .ranking-badges {
+        order: 3;
+        margin-top: 0.5rem;
+    }
+    
+    .ranking-username {
+        font-size: 1.4rem;
+    }
+    
+    .ranking-card.rank-1 .ranking-username {
+        font-size: 1.6rem;
+    }
+    
+    .ranking-card.rank-2 .ranking-username {
+        font-size: 1.5rem;
+    }
+    
+    .ranking-card.rank-3 .ranking-username {
+        font-size: 1.45rem;
+    }
+    
+    .ranking-stats {
+        justify-content: center;
+        gap: 1.5rem;
+    }
+    
+    .ranking-medal-badge {
+        font-size: 2rem;
+    }
+    
+    .show-more-btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        margin: 2rem auto;
+    }
+    
+    .excel-table-container {
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .ranking-title {
+        font-size: 1.8rem;
+    }
+    
+    .ranking-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .ranking-card {
+        padding: 1.2rem 1.5rem;
+        gap: 0.8rem;
+    }
+    
+    .ranking-username {
+        font-size: 1.2rem;
+    }
+    
+    .ranking-card.rank-1 .ranking-username {
+        font-size: 1.4rem;
+    }
+    
+    .ranking-card.rank-2 .ranking-username {
+        font-size: 1.3rem;
+    }
+    
+    .ranking-card.rank-3 .ranking-username {
+        font-size: 1.25rem;
+    }
+    
+    .ranking-medal-badge {
+        font-size: 1.8rem;
+    }
+}
+</style>
+</head>
+<body>
+  <!-- 상단 네비게이션 바 -->
+  <div class="top-bar">
+    <div class="nav-slider slide-ranking">
+      <div class="nav-buttons">
+        <button id="homeBtn" class="inactive" data-page="home">홈</button>
+        <button id="mylistBtn" class="inactive" data-page="mylist">내 리스트</button>
+        <button id="rankingBtn" class="active" data-page="ranking">랭킹</button>
+      </div>
+    </div>
+    
+    <!-- 로그아웃 링크 -->
+    <a href="#" id="logoutLink" class="logout-link">로그아웃</a>
+  </div>
+
+  <!-- 랭킹 컨테이너 -->
+  <div class="ranking-container">
+    <!-- 랭킹 헤더 -->
+    <div class="ranking-header">
+      <h1 class="ranking-title">🏆 랭킹</h1>
+      <p class="ranking-subtitle">100% 완료한 Todo를 기준으로 한 랭킹입니다</p>
+    </div>
+
+    <!-- 랭킹 리스트 -->
+    <div id="rankingList">
+      <div class="text-center">
+        <div class="loading-spinner"></div>
+        <p class="mt-3">랭킹을 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!-- 더보기 버튼 -->
+    <button id="showMoreBtn" class="show-more-btn hidden">
+      <span>더보기 (4위 이하)</span>
+    </button>
+
+    <!-- 엑셀 스타일 테이블 -->
+    <div id="excelTableContainer" class="excel-table-container hidden">
+      <div class="table-header">
+        <h3 class="table-title">📊 전체 랭킹</h3>
+        <p class="table-subtitle">4위부터의 상세 랭킹입니다</p>
+      </div>
+      <table class="excel-table">
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th>아이디</th>
+            <th>메달 수</th>
+          </tr>
+        </thead>
+        <tbody id="excelTableBody">
+          <!-- JavaScript에서 동적으로 채워짐 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 사용자 정보를 JavaScript로 전달 -->
+  <script>
+    window.userInfo = {
+      username: "{{ user_info.username }}",
+      userId: "{{ user_info.user_id }}"
+    };
+  </script>
+  
+  <!-- 사용자 정보를 JavaScript로 전달 -->
+  <script>
+    window.userInfo = {
+      username: "{{ user_info.username }}",
+      userId: "{{ user_info.user_id }}"
+    };
+    window.pageType = "ranking"; // 페이지 타입 식별
+  </script>
+  
+<script src="{{ url_for('static', filename='ranking.js') }}"></script>
+</body>
+</html>
