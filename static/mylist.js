@@ -228,6 +228,10 @@ const cancelCreate = document.getElementById('cancelCreate');
 
 // ===== Card HTML Generator =====
 function cardHTML(card) {
+  if (!card || !card.id) {
+    console.error('Invalid card data:', card);
+    return '';
+  }
   const isCompleted = (card.contents || []).length > 0 && 
     (card.contents || []).every(c => c.completed);
   
@@ -392,18 +396,22 @@ addModal?.addEventListener('click', e => {
   if (e.target === addModal) addModal.style.display = 'none';
 });
 
-cancelCreate?.addEventListener('click', () => {
-  newTodoTitle.value = '';
-  newTodoContent.value = '';
-  newTodoVisibility.value = 'public';
+// 새 카드 모달 닫기 버튼
+document.getElementById('closeAdd')?.addEventListener('click', () => {
+  document.getElementById('addTodoTitle').value = '';
+  document.getElementById('addTodoDesc').value = '';
+  document.getElementById('addTodoVisibility').value = 'public';
+  setDatetimeFields('addTodoDeadline', null);
   addModal.style.display = 'none';
 });
 
-createNewTodo?.addEventListener('click', async () => {
-  const title = sanitizeInput(newTodoTitle.value);
-  const subtitle = sanitizeInput(newTodoContent.value);
-  const deadline = getDatetimeFromFields('newTodoDeadline'); // 분리된 필드에서 날짜 가져오기
-  const isPublic = (newTodoVisibility.value === 'public');
+// 새 카드 저장 버튼
+document.getElementById('saveAdd')?.addEventListener('click', async () => {
+  const title = sanitizeInput(document.getElementById('addTodoTitle').value);
+  const subtitle = sanitizeInput(document.getElementById('addTodoDesc').value);
+  const deadline = getDatetimeFromFields('addTodoDeadline');
+  const isPublic = (document.getElementById('addTodoVisibility').value === 'public');
+  
   if (!title) return showMessage('제목을 입력하세요.', 'error');
   
   const loadingEl = showLoading('카드를 생성하는 중...');
@@ -416,10 +424,10 @@ createNewTodo?.addEventListener('click', async () => {
     });
     
     // 폼 초기화
-    newTodoTitle.value = '';
-    newTodoContent.value = '';
-    setDatetimeFields('newTodoDeadline', null); // 분리된 필드 초기화
-    newTodoVisibility.value = 'public';
+    document.getElementById('addTodoTitle').value = '';
+    document.getElementById('addTodoDesc').value = '';
+    setDatetimeFields('addTodoDeadline', null);
+    document.getElementById('addTodoVisibility').value = 'public';
     addModal.style.display = 'none';
     
     // 즉시 로컬 갱신
@@ -452,21 +460,32 @@ container?.addEventListener('click', async (e) => {
   if (!card) return;
 
   if (action === 'edit') {
+    console.log('Opening edit modal for card:', card);
     openEdit(card);
   }
   if (action === 'delete') {
     if (!confirm('정말로 이 카드를 삭제하시겠습니까?')) return;
-    await api(`/api/cards/${id}`, { method:'DELETE' });
-    await loadCards();
-    showMessage('카드를 삭제했습니다.', 'success');
+    try {
+      await api(`/api/cards/${id}`, { method:'DELETE' });
+      await loadCards();
+      showMessage('카드를 삭제했습니다.', 'success');
+    } catch(err) {
+      showMessage(`카드 삭제 실패: ${err.message}`, 'error');
+    }
   }
 });
 
 // ===== Edit Modal =====
 function openEdit(card) {
+  console.log('Opening edit modal with card:', card);
+  if (!card || !card.id) {
+    console.error('Invalid card data in openEdit:', card);
+    showMessage('카드 정보를 불러올 수 없습니다.', 'error');
+    return;
+  }
   editingCardId = card.id;
-  editTodoTitle.value = card.title || '';
-  editTodoDesc.value = card.subtitle || '';
+  document.getElementById('editTodoTitle').value = card.title || '';
+  document.getElementById('editTodoDesc').value = card.subtitle || '';
   
   // 마감일 설정 - 분리된 필드에 설정
   setDatetimeFields('editTodoDeadline', card.deadline);
@@ -476,17 +495,17 @@ function openEdit(card) {
     editVisibilitySelect.value = card.public ? 'public' : 'private';
   }
   
-  editContentList.innerHTML = '';
+  document.getElementById('editContentList').innerHTML = '';
   (card.contents || []).forEach(item => {
     const li = document.createElement('li');
     li.innerHTML = `
-      <input type="checkbox" class="contentCheck" ${item.completed?'checked':''}>
-      <span data-completed="${item.completed?'true':'false'}">${sanitizeText(item.text||'')}</span>
+      <input type="checkbox" class="contentCheck" ${item.completed ? 'checked' : ''}>
+      <span data-completed="${item.completed ? 'true' : 'false'}">${sanitizeText(item.text || '')}</span>
       <div>
-        <button class="editContentBtn">수정</button>
-        <button class="deleteContentBtn">삭제</button>
+        <button class="editContentBtn inline-btn edit">수정</button>
+        <button class="deleteContentBtn inline-btn delete">삭제</button>
       </div>`;
-    editContentList.appendChild(li);
+    document.getElementById('editContentList').appendChild(li);
   });
   editModal.style.display = 'flex';
 }
@@ -495,13 +514,28 @@ editModal?.addEventListener('click', e => {
   if (e.target === editModal) editModal.style.display = 'none';
 });
 
-document.getElementById('cancelEdit')?.addEventListener('click', () => {
+// 편집 모달 닫기 버튼
+document.getElementById('closeEdit')?.addEventListener('click', () => {
   editModal.style.display = 'none';
   editingCardId = null;
 });
 
+// 편집 모달 삭제 버튼
+document.getElementById('deleteEdit')?.addEventListener('click', async () => {
+  if (!editingCardId || !confirm('정말로 이 카드를 삭제하시겠습니까?')) return;
+  try {
+    await api(`/api/cards/${editingCardId}`, { method: 'DELETE' });
+    editModal.style.display = 'none';
+    editingCardId = null;
+    await loadCards();
+    showMessage('카드를 삭제했습니다.', 'success');
+  } catch(err) {
+    showMessage(`카드 삭제 실패: ${err.message}`, 'error');
+  }
+});
+
 // 편집 리스트 이벤트
-editContentList?.addEventListener('click', (e) => {
+document.getElementById('editContentList')?.addEventListener('click', (e) => {
   const li = e.target.closest('li');
   if (!li) return;
   
@@ -530,7 +564,7 @@ editContentList?.addEventListener('click', (e) => {
   }
 });
 
-editContentList?.addEventListener('change', (e) => {
+document.getElementById('editContentList')?.addEventListener('change', (e) => {
   if (e.target.type === 'checkbox') {
     const span = e.target.nextElementSibling;
     if (span) {
@@ -550,23 +584,23 @@ document.getElementById('addEditContent')?.addEventListener('click', () => {
     <input type="checkbox" class="contentCheck">
     <span data-completed="false">${sanitizeText(text)}</span>
     <div>
-      <button class="editContentBtn">수정</button>
-      <button class="deleteContentBtn">삭제</button>
+      <button class="editContentBtn inline-btn edit">수정</button>
+      <button class="deleteContentBtn inline-btn delete">삭제</button>
     </div>`;
-  editContentList.appendChild(li);
+  document.getElementById('editContentList').appendChild(li);
   input.value = '';
 });
 
-// 저장
-document.getElementById('saveEditTodo')?.addEventListener('click', async () => {
-  const title = sanitizeInput(editTodoTitle.value);
-  const subtitle = sanitizeInput(editTodoDesc.value);
-  const deadline = getDatetimeFromFields('editTodoDeadline'); // 분리된 필드에서 날짜 가져오기
+// 편집 모달 저장 버튼
+document.getElementById('saveEdit')?.addEventListener('click', async () => {
+  const title = sanitizeInput(document.getElementById('editTodoTitle').value);
+  const subtitle = sanitizeInput(document.getElementById('editTodoDesc').value);
+  const deadline = getDatetimeFromFields('editTodoDeadline');
   const isPublic = document.getElementById('editTodoVisibility').value === 'public';
   
   if (!title) return showMessage('제목을 입력하세요.', 'error');
   
-  const contents = Array.from(editContentList.children).map(li => {
+  const contents = Array.from(document.getElementById('editContentList').children).map(li => {
     const checkbox = li.querySelector('input[type="checkbox"]');
     const span = li.querySelector('span');
     return {

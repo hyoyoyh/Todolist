@@ -97,6 +97,8 @@
       {% for field in edit_modal.fields %}
         {% if field.type == 'text' %}
           <input type="text" id="{{ field.id }}" placeholder="{{ field.placeholder }}" maxlength="30" />
+        {% elif field.type == 'textarea' %}
+          <textarea id="{{ field.id }}" rows="{{ field.rows }}" placeholder="{{ field.placeholder }}" maxlength="50"></textarea>
         {% elif field.type == 'datetime-local' %}
           <label>{{ field.label }}</label>
           <div class="datetime-group" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 0.5rem; align-items: center;">

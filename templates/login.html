@@ -7,6 +7,214 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="{{ url_for('static', filename='login.css') }}" rel="stylesheet"/>
     </head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+            body {
+                                            background: #0d1117;
+                                            background-image:
+                                                radial-gradient(1200px 600px at 80% -10%, rgba(33,150,243,0.12), transparent 70%),
+                                                radial-gradient(1000px 500px at -10% 20%, rgba(25,118,210,0.08), transparent 60%);
+                                            color: #e6edf3;
+                                            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                                    }
+            /* fullscreen intro overlay */
+            .intro-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                opacity: 1;
+                transition: opacity 600ms ease;
+            }
+            .intro-overlay.fade-out { opacity: 0; }
+            .login-card {
+                background: rgba(255,255,255,0.06);
+                border-radius: 18px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+                padding: 2.5rem 2rem;
+                border: 1px solid rgba(255,255,255,0.08);
+                color: #e6edf3;
+            }
+            .login-title {
+                color: #1976d2;
+                letter-spacing: 2px;
+            }
+            /* staged reveal helpers */
+                /* staged reveal helpers */
+                .hidden { display: none !important; }
+
+                /* intro animation block */
+                .intro {
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.9rem;
+                    will-change: transform, opacity;
+                    transition: transform 600ms ease, opacity 600ms ease, filter 600ms ease;
+                    perspective: 1000px;
+                }
+                /* glowing aura behind title */
+                .intro .aura {
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 300px;
+                    height: 300px;
+                    border-radius: 50%;
+                    background: radial-gradient(closest-side, rgba(25,118,210,0.25), rgba(25,118,210,0.08), transparent 70%);
+                    filter: blur(10px);
+                    animation: auraPulse 1800ms ease-in-out forwards;
+                    pointer-events: none;
+                }
+                @keyframes auraPulse {
+                    0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+                    50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+                    100% { opacity: 0.9; transform: translateX(-50%) scale(1); }
+                }
+                .intro-title {
+                    font-size: 3rem;
+                    margin: 0;
+                    background: linear-gradient(90deg, #1565c0, #42a5f5, #1565c0);
+                    background-size: 200% auto;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    text-shadow: 0 6px 24px rgba(25,118,210,0.25);
+                    animation: epicPop 900ms cubic-bezier(.2,.7,.2,1) both, shine 1600ms ease forwards;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 800;
+                    letter-spacing: -0.03em;
+                }
+                @keyframes epicPop {
+                    0% { opacity: 0; transform: translateY(8px) scale(0.92) rotateX(12deg); letter-spacing: -1px; }
+                    60% { opacity: 1; transform: translateY(0) scale(1.06) rotateX(0); letter-spacing: 1.5px; }
+                    100% { transform: translateY(0) scale(1) rotateX(0); letter-spacing: 1px; }
+                }
+                @keyframes shine {
+                    0% { background-position: 0% center; }
+                    100% { background-position: 100% center; }
+                }
+                .intro-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0.25rem 0 0;
+                    width: 100%;
+                    max-width: 440px;
+                }
+                .intro-list li {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.6rem;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    color: #c9d1d9;
+                    border-radius: 14px;
+                    padding: 0.8rem 1rem;
+                    margin-top: 0.6rem;
+                    box-shadow: 0 4px 14px rgba(25,118,210,0.08);
+                    opacity: 0;
+                    transform: translateY(10px);
+                    animation: fadeSlideIn 560ms ease forwards;
+                }
+                .intro-list li:nth-child(1) { animation-delay: 180ms; }
+                .intro-list li:nth-child(2) { animation-delay: 380ms; }
+                .intro-list li:nth-child(3) { animation-delay: 580ms; }
+                .intro-list .check { color: #1976d2; font-weight: 800; }
+                .intro.shrink { transform: translateY(-10px) scale(0.65) rotateX(6deg); opacity: 0; filter: blur(1px); }
+
+                @keyframes fadeSlideIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            /* removed duplicate legacy intro styles to avoid conflicts */
+            .form-control-lg { 
+                border-radius: 10px; 
+                background: #0b1220; 
+                color: #e6edf3; 
+                border: 1px solid rgba(255,255,255,0.12); 
+            }
+            .form-control-lg::placeholder {
+                color: #e6edf3;
+                opacity: 0.8;
+            }
+            .form-control-lg:focus {
+                background: #0f172a;
+                border-color: #1976d2;
+                box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25);
+                color: #e6edf3;
+            }
+            .form-control-lg:-webkit-autofill,
+            .form-control-lg:-webkit-autofill:hover,
+            .form-control-lg:-webkit-autofill:focus,
+            .form-control-lg:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 30px #0b1220 inset !important;
+                -webkit-text-fill-color: #e6edf3 !important;
+                background-color: #0b1220 !important;
+                transition: background-color 5000s ease-in-out 0s;
+            }
+            .btn-primary { background: linear-gradient(135deg, #1976d2, #2196f3); border: none; }
+            .btn-secondary { background: transparent; color: #90caf9; border: 2px solid #1976d2; }
+            .btn-primary:hover, .btn-secondary:hover {
+                opacity: 0.9;
+            }
+            #loginMsg {
+                min-height: 24px;
+                height: 24px;
+                overflow: hidden;
+            }
+            /* login card fade-in */
+            @keyframes cardIn {
+                from { opacity: 0; transform: translateY(12px) scale(0.98); }
+                to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .login-card.card-fade-in { animation: cardIn 520ms ease forwards; }
+            /* loading spinner on login button */
+            @keyframes spin { to { transform: rotate(360deg); } }
+            .btn-primary.loading {
+                position: relative;
+                pointer-events: none;
+                padding-left: 44px; /* restore original spinner space */
+            }
+            .btn-primary.loading::after {
+                content: '';
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                width: 16px;
+                height: 16px;
+                margin-top: -8px;
+                border: 2px solid rgba(255,255,255,0.6);
+                border-top-color: #ffffff;
+                border-radius: 50%;
+                animation: spin 800ms linear infinite;
+            }
+
+            /* Intro size overrides to enlarge entry animation */
+            .intro .aura { width: 480px; height: 480px; }
+            .intro-title { font-size: 4.2rem; }
+            .intro-list { max-width: 720px; }
+            .intro-list li { gap: 1rem; border-radius: 18px; padding: 1.1rem 1.4rem; margin-top: 0.8rem; font-size: 1.2rem; }
+            .intro-list .check { font-size: 1.3em; }
+
+            /* Responsive guard for very small screens */
+            @media (max-width: 480px) {
+                .intro .aura { width: 300px; height: 300px; }
+                .intro-title { font-size: 3rem; }
+                .intro-list { max-width: 90vw; }
+                .intro-list li { padding: 0.9rem 1.1rem; font-size: 1.05rem; }
+            }
+            .intro-title, #staticTitle {
+                font-family: 'Inter', sans-serif;
+                font-weight: 800;
+                letter-spacing: -0.03em;
+            }
+    </style>
     <body>
     <!-- Fullscreen intro overlay -->
     <div id="introOverlay" class="intro-overlay" aria-hidden="true">
